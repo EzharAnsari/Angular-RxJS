@@ -4,6 +4,7 @@ import { BehaviorSubject, catchError, combineLatest, EMPTY, map, startWith, Subj
 
 import { ProductService } from './product.service';
 import { ProductCategoryService } from '../product-categories/product-category.service';
+import { SupplierService } from '../suppliers/supplier.service';
 
 @Component({
   templateUrl: './product-list.component.html',
@@ -46,7 +47,10 @@ export class ProductListComponent {
     })
   );
 
-  constructor(private productService: ProductService, private productCategoryService: ProductCategoryService) {}
+  constructor(
+    private productService: ProductService,
+    private productCategoryService: ProductCategoryService,
+    private supplierService: SupplierService) {}
 
   onAdd(): void {
     this.productService.addProduct();
