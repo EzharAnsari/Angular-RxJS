@@ -3,7 +3,8 @@ import { Supplier } from '../../suppliers/supplier';
 import { Product } from '../product';
 
 import { ProductService } from '../product.service';
-import { catchError, EMPTY, Subject } from 'rxjs';
+import { catchError, combineLatest, EMPTY, Subject } from 'rxjs';
+import {filter, map} from 'rxjs/operators'
 
 @Component({
   selector: 'pm-product-detail',
@@ -11,8 +12,6 @@ import { catchError, EMPTY, Subject } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductDetailComponent {
-  pageTitle = 'Product Detail';
-
   private errorMessageSubject = new Subject<string>();
   errorMessage$ = this.errorMessageSubject.asObservable();
 
@@ -26,6 +25,13 @@ export class ProductDetailComponent {
       })
     );
 
+    pageTitle$ = this.product$
+      .pipe(
+        map((p) => 
+          p ? `Product Details for: ${p.productName}` : null
+        )
+      )
+
     productSuppliers$ = this.productService.selectedProductSuppliers$
       .pipe(
         catchError(err => {
@@ -33,6 +39,16 @@ export class ProductDetailComponent {
           return EMPTY
         })
       )
+
+    vm$ = combineLatest(
+      this.product$,
+      this.pageTitle$,
+      this.productSuppliers$
+    ).pipe(
+      filter(([product]) => Boolean(product)),
+      map(([product, pageTitle, productSuppliers]) => 
+      ({product, pageTitle, productSuppliers}))
+    )
 
   constructor(private productService: ProductService) { }
 
