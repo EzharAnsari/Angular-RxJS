@@ -1,12 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { BehaviorSubject, catchError, combineLatest, map, merge, Observable, Subject, tap, throwError } from 'rxjs';
-import { scan, shareReplay } from 'rxjs/operators'
+import { BehaviorSubject, catchError, combineLatest, from, map, merge, Observable, of, Subject, tap, throwError } from 'rxjs';
+import { filter, mergeMap, scan, shareReplay, switchMap, toArray } from 'rxjs/operators'
 
 import { Product } from './product';
 import { ProductCategoryService } from '../product-categories/product-category.service';
 import { SupplierService } from '../suppliers/supplier.service';
+import { Supplier } from '../suppliers/supplier';
+import { JsonPipe } from '@angular/common';
 
 @Injectable({
   providedIn: 'root'
@@ -52,14 +54,28 @@ export class ProductService {
       tap(product => console.log('selectedProduct', product))
     );
 
-  selectedProductSuppliers$ = combineLatest(
-    this.selectedProduct$,
-    this.supplierService.supliers$
-  ).pipe(
-    map(([product, suppliers]) => 
-      suppliers.filter(sup => product?.supplierIds?.includes(sup.id))
+  // selectedProductSuppliers$ = combineLatest(
+  //   this.selectedProduct$,
+  //   this.supplierService.supliers$
+  // ).pipe(
+  //   map(([product, suppliers]) => 
+  //     suppliers.filter(sup => product?.supplierIds?.includes(sup.id))
+  //   )
+  // )
+
+  selectedProductSuppliers$ = this.selectedProduct$
+    .pipe(
+      filter(selectedProduct => Boolean(selectedProduct)),
+      switchMap(selectedProduct => {
+        const ids = selectedProduct?.supplierIds ? selectedProduct.supplierIds : []; 
+        return from(ids)
+          .pipe(
+            mergeMap(supplierId => this.http.get<Supplier>(`${this.suppliersUrl}/${supplierId}`)),
+            toArray(),
+            tap(data => console.log('product suppliers data', JSON.stringify(data)))
+          )
+        })
     )
-  )
 
   private productInsertSubject = new Subject<Product>();
   productInsertAction$ = this.productInsertSubject.asObservable();
