@@ -6,6 +6,7 @@ import { scan, shareReplay } from 'rxjs/operators'
 
 import { Product } from './product';
 import { ProductCategoryService } from '../product-categories/product-category.service';
+import { SupplierService } from '../suppliers/supplier.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,7 +17,7 @@ export class ProductService {
 
   products$ = this.http.get<Product[]>(this.productsUrl)
   .pipe(
-    // tap(data => console.log('Products: ', JSON.stringify(data))),
+    tap(data => console.log('Products: ', JSON.stringify(data))),
     shareReplay(1),
     catchError(this.handleError)
   );
@@ -51,6 +52,15 @@ export class ProductService {
       tap(product => console.log('selectedProduct', product))
     );
 
+  selectedProductSuppliers$ = combineLatest(
+    this.selectedProduct$,
+    this.supplierService.supliers$
+  ).pipe(
+    map(([product, suppliers]) => 
+      suppliers.filter(sup => product?.supplierIds?.includes(sup.id))
+    )
+  )
+
   private productInsertSubject = new Subject<Product>();
   productInsertAction$ = this.productInsertSubject.asObservable();
 
@@ -61,7 +71,7 @@ export class ProductService {
     scan((acc: Product[], value: Product[]) => [...acc, ...value])
   );
   
-  constructor(private http: HttpClient, private productCategorySerice: ProductCategoryService) { }
+  constructor(private http: HttpClient, private productCategorySerice: ProductCategoryService, private supplierService: SupplierService) { }
 
   private fakeProduct(): Product {
     return {
