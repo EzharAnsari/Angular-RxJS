@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { throwError, Observable, of, concatMap, tap, mergeMap } from 'rxjs';
+import { throwError, Observable, of, concatMap, tap, mergeMap, switchMap } from 'rxjs';
 import { Supplier } from './supplier';
 
 @Injectable({
@@ -18,13 +18,20 @@ export class SupplierService {
 
   supliersWtithMergeMap$ = of(1, 5, 8)
     .pipe(
-      tap(id => {console.log('concatMap source Observable', id)}),
+      tap(id => {console.log('mergeMap source Observable', id)}),
       mergeMap(id => this.http.get<Supplier>(`${this.suppliersUrl}/${id}`))
+    )
+
+  supliersWtithSwitchMap$ = of(1, 5, 8)
+    .pipe(
+      tap(id => {console.log('switchMap source Observable', id)}),
+      switchMap(id => this.http.get<Supplier>(`${this.suppliersUrl}/${id}`))
     )
 
   constructor(private http: HttpClient) {
     this.supliersWtithConcatMap$.subscribe( item => {console.log('ConcatMap result', item) })
     this.supliersWtithMergeMap$.subscribe( item => {console.log('mergeMap result', item) })
+    this.supliersWtithSwitchMap$.subscribe( item => {console.log('switchMap result', item) })
   }
 
   private handleError(err: HttpErrorResponse): Observable<never> {
